@@ -1,36 +1,9 @@
 import {gql, ApolloServer, UserInputError} from "apollo-server";
 import { v1 as uuid } from "uuid";
+import axios from "axios";
 
 
-const Persons = [
-    {
-      "_id": "62eac9fecaf7d96211f397a0",
-      "name": "Vazquez Pena",
-      "phone": "+54 (860) 481-3060",
-      "street": "586 Emerson Place",
-      "city": "Tuskahoma"
-    },
-    {
-      "_id": "62eac9fe9c0eeb6d6b2369b6",
-      "name": "Angelica Cross",
-      "phone": "+54 (868) 534-3086",
-      "street": "228 Bancroft Place",
-      "city": "Choctaw"
-    },
-    {
-      "_id": "62eac9fecdfcd7ea585265d4",
-      "name": "Jimmie Potts",
-      "street": "376 Kingston Avenue",
-      "city": "Allamuchy"
-    },
-    {
-      "_id": "62eac9fe7f5eaaf7b9e677e2",
-      "name": "Cleo Dunlap",
-      "phone": "+54 (966) 533-2286",
-      "street": "228 Bancroft Place",
-      "city": "Marenisco"
-    }
-  ]
+
 
 
 const typeDefs = gql`
@@ -46,7 +19,7 @@ enum YesNo {
  }
 
  type Person {
-    _id: ID!
+    id: ID!
     name: String!
     phone: String
     address: Address!
@@ -76,36 +49,45 @@ enum YesNo {
 const resolvers = {
     Query: {
         personCount: () => Persons.length,
-        allPersons: (root, args) => {
-            if(!args.phone) return Persons
+        allPersons: async (root, args) => {
 
-            return Persons
+            const {data: personsData} = await axios.get("http://localhost:3000/persons");
+
+            if(!args.phone) return personsData
+
+            return personsData
                 .filter(person => args.phone === "YES"? person.phone : !person.phone)
         },
-        findPerson: (root, args) => {
+        findPerson: async (root, args) => {
             const { name } = args;
-            return Persons.find(person => person.name === name);
+            const {data: personsData} = await axios.get("http://localhost:3000/persons");
+
+            return personsData.find(person => person.name === name);
         }
     },
     Mutation: {
-        addPerson: (root, args) => {
-            if(Persons.find(p => p.name === args.name)) {
+        addPerson: async (root, args) => {
+            const {data: personsData} = await axios.get("http://localhost:3000/persons");
+
+            if(personsData.find(p => p.name === args.name)) {
                 throw new UserInputError("Name must be unique", {
                     argsError: args.name
                 })
             }
-            const person = {_id: uuid(), ...args}
-            Persons.push(person) 
+            const person = {id: uuid(), ...args}
+            await axios.post("http://localhost:3000/persons", JSON.stringify(person), {'Content-Type': 'application/json'});
             return person
         },
-        editPhone: (root, args) => {
-            const personIndex = Persons.findIndex(p => p.name === args.name)
+        editPhone: async (root, args) => {
+            const {data: personsData} = await axios.get("http://localhost:3000/persons");
+
+            const personIndex = personsData.findIndex(p => p.name === args.name)
             if(!personIndex === -1) return null
 
-            const person = Persons[personIndex]
+            const person = personsData[personIndex]
 
             const updatePerson = {...person, phone: args.phone}
-            Persons[personIndex] = updatePerson
+            personsData[personIndex] = updatePerson
 
             return updatePerson
         }
