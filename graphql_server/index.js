@@ -3,7 +3,35 @@ import { v1 as uuid } from "uuid";
 import axios from "axios";
 
 
-
+const Persons = [
+      {
+        "id": "62eac9fecaf7d96211f397a0",
+        "name": "Vazquez Pena",
+        "phone": "+54 (860) 481-3060",
+        "street": "586 Emerson Place",
+        "city": "Tuskahoma"
+      },
+      {
+        "id": "62eac9fe9c0eeb6d6b2369b6",
+        "name": "Angelica Cross",
+        "phone": "+54 (868) 534-3086",
+        "street": "228 Bancroft Place",
+        "city": "Choctaw"
+      },
+      {
+        "id": "62eac9fecdfcd7ea585265d4",
+        "name": "Jimmie Potts",
+        "street": "376 Kingston Avenue",
+        "city": "Allamuchy"
+      },
+      {
+        "id": "62eac9fe7f5eaaf7b9e677e2",
+        "name": "Cleo Dunlap",
+        "phone": "+54 (966) 533-2286",
+        "street": "228 Bancroft Place",
+        "city": "Marenisco"
+      }
+]
 
 
 const typeDefs = gql`
@@ -23,7 +51,6 @@ enum YesNo {
     name: String!
     phone: String
     address: Address!
-    console: String
  }
 
  type Query {
@@ -51,43 +78,51 @@ const resolvers = {
         personCount: () => Persons.length,
         allPersons: async (root, args) => {
 
-            const {data: personsData} = await axios.get("http://localhost:3000/persons");
+            //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
-            if(!args.phone) return personsData
+            if(!args.phone) return Persons
 
-            return personsData
+            return Persons
                 .filter(person => args.phone === "YES"? person.phone : !person.phone)
         },
         findPerson: async (root, args) => {
             const { name } = args;
-            const {data: personsData} = await axios.get("http://localhost:3000/persons");
+            //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
-            return personsData.find(person => person.name === name);
+            return Persons.find(person => person.name === name);
         }
     },
     Mutation: {
         addPerson: async (root, args) => {
-            const {data: personsData} = await axios.get("http://localhost:3000/persons");
+            //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
-            if(personsData.find(p => p.name === args.name)) {
+                
+            if(Persons.find(p => p.name === args.name)) {
                 throw new UserInputError("Name must be unique", {
                     argsError: args.name
                 })
             }
+
             const person = {id: uuid(), ...args}
-            await axios.post("http://localhost:3000/persons", JSON.stringify(person), {'Content-Type': 'application/json'});
+            //await axios.post("http://localhost:3000/persons", JSON.stringify(person), {'Content-Type': 'application/json'});
+            Persons.push(person)
             return person
         },
         editPhone: async (root, args) => {
-            const {data: personsData} = await axios.get("http://localhost:3000/persons");
+            //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
-            const personIndex = personsData.findIndex(p => p.name === args.name)
-            if(!personIndex === -1) return null
+            const personIndex = Persons.findIndex(p => p.name === args.name)
 
-            const person = personsData[personIndex]
+            if(personIndex === -1){
+                throw new UserInputError("Name not Found", {
+                    argsError: args.name
+                })
+            }
+            
+            const person = Persons[personIndex]
 
             const updatePerson = {...person, phone: args.phone}
-            personsData[personIndex] = updatePerson
+            Persons[personIndex] = updatePerson
 
             return updatePerson
         }
