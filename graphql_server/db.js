@@ -1,13 +1,10 @@
 import mongoose from "mongoose";
+import 'dotenv/config'
 
-const MONGODB_URI = process.env.URI ;
 
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useFindAndModify: false,
-    useCreateIndex: true
-})
+const MONGODB_URI = process.env.DB_URI;
+
+mongoose.connect(MONGODB_URI)
 .then(() => {
     console.log('connected to MongoDB')
 }).catch((error) => {

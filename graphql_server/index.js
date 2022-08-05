@@ -1,9 +1,11 @@
 import {gql, ApolloServer, UserInputError} from "apollo-server";
 import { v1 as uuid } from "uuid";
 import axios from "axios";
+import './db.js'
+import Person from './models/Person.js'
 
 
-const Persons = [
+/*const Persons = [
       {
         "id": "62eac9fecaf7d96211f397a0",
         "name": "Vazquez Pena",
@@ -31,7 +33,7 @@ const Persons = [
         "street": "228 Bancroft Place",
         "city": "Marenisco"
       }
-]
+]*/
 
 
 const typeDefs = gql`
@@ -75,56 +77,35 @@ enum YesNo {
 
 const resolvers = {
     Query: {
-        personCount: () => Persons.length,
+        personCount: () => Person.collection.countDocuments(),
         allPersons: async (root, args) => {
-
             //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
-            if(!args.phone) return Persons
-
-            return Persons
-                .filter(person => args.phone === "YES"? person.phone : !person.phone)
+            return Person.find({})
         },
         findPerson: async (root, args) => {
             const { name } = args;
             //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
-            return Persons.find(person => person.name === name);
+            return Person.findOne({ name })
         }
     },
     Mutation: {
-        addPerson: async (root, args) => {
+        addPerson: (root, args) => {
             //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
-                
-            if(Persons.find(p => p.name === args.name)) {
-                throw new UserInputError("Name must be unique", {
-                    argsError: args.name
-                })
-            }
 
-            const person = {id: uuid(), ...args}
-            //await axios.post("http://localhost:3000/persons", JSON.stringify(person), {'Content-Type': 'application/json'});
-            Persons.push(person)
-            return person
+            const person = new Person({ ...args })
+            return person.save()
+
+            //await axios.post("http://localhost:3000/persons", JSON.stringify(person), {'Content-Type': 'application/json'})
         },
         editPhone: async (root, args) => {
             //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
-            const personIndex = Persons.findIndex(p => p.name === args.name)
-
-            if(personIndex === -1){
-                throw new UserInputError("Name not Found", {
-                    argsError: args.name
-                })
-            }
-            
-            const person = Persons[personIndex]
-
-            const updatePerson = {...person, phone: args.phone}
-            Persons[personIndex] = updatePerson
-
-            return updatePerson
+            const person = await Person.findOne({ name: args.name })
+            person.phone = args.phone
+            return person.save()
         }
     },
     Person: {

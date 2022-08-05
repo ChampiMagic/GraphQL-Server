@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose from "mongoose";
 import mongooseUniqueValidator from "mongoose-unique-validator";
 
 const schema = new mongoose.Schema({
