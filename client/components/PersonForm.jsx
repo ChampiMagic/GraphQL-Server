@@ -29,6 +29,9 @@ const PersonForm = () => {
 
     const notifyError = message => {
       setErrorMessage(message)
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
     }
 
     const [ createPerson ] = useMutation(CREATE_PERSON, {
@@ -46,12 +49,16 @@ const PersonForm = () => {
     const handleSubmit = (e) => {
         e.preventDefault()
 
-        createPerson({ variables: { name, street, phone, city } })
+        if(name === "" || phone === "" || street === "" || city === ""){
+          notifyError("complete all the fields")
+        } else {
+          createPerson({ variables: { name, street, phone, city } })
 
-        setName('')
-        setPhone('')
-        setStreet('')
-        setCity('')
+          setName('')
+          setPhone('')
+          setStreet('')
+          setCity('')
+        }
     }
 
 

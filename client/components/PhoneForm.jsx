@@ -23,7 +23,11 @@ const PhoneForm = () => {
     const [ errorMessage, setErrorMessage ] = useState(null)
 
     const notifyError = message => {
-        setErrorMessage(message)
+      setErrorMessage(message)
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+        
       }
 
     const [ changePhone ] = useMutation(EDIT_PHONE, {
