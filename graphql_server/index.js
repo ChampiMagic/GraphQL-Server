@@ -1,40 +1,13 @@
-import {gql, ApolloServer, UserInputError} from "apollo-server";
+import {gql, ApolloServer, UserInputError, AuthenticationError} from "apollo-server";
 import { v1 as uuid } from "uuid";
 import axios from "axios";
 import './db.js'
 import Person from './models/Person.js'
+import User from './models/User.js'
+import 'dotenv/config'
+import jwt from "jsonwebtoken";
 
-
-/*const Persons = [
-      {
-        "id": "62eac9fecaf7d96211f397a0",
-        "name": "Vazquez Pena",
-        "phone": "+54 (860) 481-3060",
-        "street": "586 Emerson Place",
-        "city": "Tuskahoma"
-      },
-      {
-        "id": "62eac9fe9c0eeb6d6b2369b6",
-        "name": "Angelica Cross",
-        "phone": "+54 (868) 534-3086",
-        "street": "228 Bancroft Place",
-        "city": "Choctaw"
-      },
-      {
-        "id": "62eac9fecdfcd7ea585265d4",
-        "name": "Jimmie Potts",
-        "street": "376 Kingston Avenue",
-        "city": "Allamuchy"
-      },
-      {
-        "id": "62eac9fe7f5eaaf7b9e677e2",
-        "name": "Cleo Dunlap",
-        "phone": "+54 (966) 533-2286",
-        "street": "228 Bancroft Place",
-        "city": "Marenisco"
-      }
-]*/
-
+const JWT_SECRET = process.env.JWT_SECRET
 
 const typeDefs = gql`
 
@@ -55,10 +28,21 @@ enum YesNo {
     address: Address!
  }
 
+ type User {
+    id: ID!
+    username: String!
+    friend: [Person]!
+ }
+
+ type Token {
+    value: String!
+ }
+
  type Query {
     personCount: Int!
     allPersons(phone: YesNo): [Person]!
     findPerson(name: String!): Person
+    me: User
  }
 
  type Mutation {
@@ -72,6 +56,13 @@ enum YesNo {
         name: String!
         phone: String!
     ): Person
+    createUser (
+        username: String!
+    ) : User
+    login (
+        username: String!
+        password: String!
+    ) : Token
  }
 `
 
@@ -81,22 +72,41 @@ const resolvers = {
         allPersons: async (root, args) => {
             //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
-            return Person.find({})
+            if(!args.name) return Person.find({})
+
+            return Person.find({ phone: { exists: args.phone === "YES" }})
         },
         findPerson: async (root, args) => {
-            const { name } = args;
+            const { name } = args; 
             //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
             return Person.findOne({ name })
+        },
+        me: (root, args, context) => {
+            return context.currentUser
         }
     },
     Mutation: {
-        addPerson: (root, args) => {
+        addPerson: async (root, args, context) => {
             //const {data: personsData} = await axios.get("http://localhost:3000/persons");
+            const { currentUser } = context
 
+            console.log(currentUser)
+            if(!currentUser) throw new AuthenticationError("not authenticated")
 
             const person = new Person({ ...args })
-            return person.save()
+
+            try {
+                await person.save()
+                currentUser.friends = currentUser.friends.concat(person)
+                await currentUser.save()
+              } catch (error) {
+                 throw new UserInputError(error.message, {
+                     invalidArgs: args
+                 })
+              }
+
+            return person
 
             //await axios.post("http://localhost:3000/persons", JSON.stringify(person), {'Content-Type': 'application/json'})
         },
@@ -104,8 +114,53 @@ const resolvers = {
             //const {data: personsData} = await axios.get("http://localhost:3000/persons");
 
             const person = await Person.findOne({ name: args.name })
+
+            if(!person) return 
+
             person.phone = args.phone
-            return person.save()
+
+            try {
+               await person.save()
+             } catch (error) {
+                throw new UserInputError(error.message, {
+                    invalidArgs: args
+                })
+             }
+
+             return person 
+            
+        },
+        createUser: async (root, args) => {
+            const newUser = new User({ username: args.username })
+
+            try {
+
+                await newUser.save()
+
+            } catch (error) {
+                throw new UserInputError(error.message, {
+                    invalidArgs: args
+                })
+            }
+
+            return newUser
+
+        },
+        login: async (root, args) => {
+            const logedUser = await User.findOne({ username: args.username })
+
+            if(!logedUser || args.password !== 'secret') {
+                throw new UserInputError('wrong credentials')
+            }
+
+            const userForToken = {
+                username: logedUser.username,
+                id: logedUser._id
+            }
+
+            return {
+                value: jwt.sign(userForToken, JWT_SECRET)
+            }
         }
     },
     Person: {
@@ -121,7 +176,21 @@ const resolvers = {
 
 const server = new ApolloServer({
     typeDefs,
-    resolvers
+    resolvers,
+    context: async ({ req }) => {
+
+        
+        const auth = req? req.headers.authorization : null
+        
+        if(auth && auth.toLowerCase().startsWith('bearer ')) {
+            const token = auth.substring(7)
+            
+            const { id } = jwt.verify(token, JWT_SECRET) 
+           
+            const currentUser = await User.findById(id).populate('friends')
+            return { currentUser }
+        }
+    }
 })
 
 server.listen().then(({url}) => {
