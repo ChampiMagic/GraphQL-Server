@@ -100,8 +100,7 @@ const resolvers = {
 
             try {
                 await person.save()
-                currentUser.friends = currentUser.friends.concat(person)
-                await currentUser.save()
+               
               } catch (error) {
                  throw new UserInputError(error.message, {
                      invalidArgs: args

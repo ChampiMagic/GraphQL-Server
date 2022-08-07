@@ -35,10 +35,23 @@ const PersonForm = () => {
     }
 
     const [ createPerson ] = useMutation(CREATE_PERSON, {
-      refetchQueries: [ { query: ALL_PERSONS } ],
+      refetchQueries: [ { query: ALL_PERSONS } ], //                   automatically (less efficient, error syntax null)
       onError: (error) => {
         notifyError(error.graphQLErrors[0].message)
-      }
+      },
+      // update: (store, response) => {                                 Manually (more efficient, but probability of syntax error is high)
+      //   const dataInStore = store.readQuery({ query: ALL_PERSONS })
+      //   store.writeQuery({
+      //     query: ALL_PERSONS,
+      //     data: {
+      //       ...dataInStore,
+      //       allPersons: [
+      //         ...dataInStore.allPersons,
+      //         response.data.addPerson
+      //       ]
+      //     }
+      //   })
+      // }
     })
 
     const [name, setName] = useState('')
