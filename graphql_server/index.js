@@ -63,6 +63,9 @@ enum YesNo {
         username: String!
         password: String!
     ) : Token
+    addAsFriend (
+        name: String!
+    ) : User
  }
 `
 
@@ -91,7 +94,6 @@ const resolvers = {
             //const {data: personsData} = await axios.get("http://localhost:3000/persons");
             const { currentUser } = context
 
-            console.log(currentUser)
             if(!currentUser) throw new AuthenticationError("not authenticated")
 
             const person = new Person({ ...args })
@@ -161,6 +163,24 @@ const resolvers = {
             return {
                 value: jwt.sign(userForToken, JWT_SECRET)
             }
+        },
+        addAsFriend: async (root, args, context) =>  {
+            const { currentUser } = context
+            if(!currentUser) throw new AuthenticationError("not authenticated")
+
+            const person = Person.findOne({ name: args.name})
+
+            const notInList = person => !currentUser.friends
+                .map(p => p._id)
+                .include(person._id)
+            
+
+            if(notInList(person)) {
+                currentUser.friends = currentUser.friends.concat(person)
+                await currentUser.save()
+            }
+
+            return currentUser
         }
     },
     Person: {
