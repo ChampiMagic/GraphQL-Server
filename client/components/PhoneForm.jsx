@@ -1,21 +1,9 @@
 import React, { useState } from "react"
 import { gql, useMutation } from "@apollo/client"
 import Notify from "./Notify"
+import { EDIT_PHONE } from "../utils/graphMutations"
 
 
-
-const EDIT_PHONE = gql`
-mutation EditPhone($name: String!, $phone: String!) {
-    editPhone(
-      name: $name
-      phone: $phone
-    ) {
-      id
-      name
-      phone
-    }
-  }
-`
 
 const PhoneForm = () => {
 

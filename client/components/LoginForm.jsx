@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from "react"
 import { gql, useMutation } from "@apollo/client"
 import Notify from "./Notify"
+import { LOGIN } from "../utils/graphMutations"
 
 
 
-const LOGIN = gql`
-mutation Login($username: String!, $password: String!) {
-    login(
-      username: $username
-      password: $password
-    ) {
-      value
-    }
-  }
-`
+
 
 const LoginForm = ({setToken}) => {
 

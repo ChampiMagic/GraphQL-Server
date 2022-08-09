@@ -7,8 +7,6 @@ import { ApolloClient, HttpLink, InMemoryCache, ApolloProvider } from '@apollo/c
 const getAuth = ()  => {
   const token = localStorage.getItem("user-token")
 
-  console.log("token", token)
-
   return token? `bearer ${token}` : null
 }
 

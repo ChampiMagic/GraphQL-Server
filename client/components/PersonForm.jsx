@@ -1,27 +1,11 @@
 import React, { useState } from "react"
 import { gql, useMutation } from "@apollo/client"
-import { ALL_PERSONS } from "../src/App"
 import Notify from './Notify'
+import { CREATE_PERSON } from "../utils/graphMutations"
+import { ALL_PERSONS } from "../utils/graphQueries"
 
 
-const CREATE_PERSON = gql`
-mutation AddPerson($name: String!, $phone: String!, $street: String!, $city: String!) {
-   addPerson(
-      name: $name
-      phone: $phone
-      street: $street
-      city: $city
-    ) {
-      id
-      name
-      phone
-      address {
-        city
-        street
-      }
-    }
-  }
-`
+
 
 const PersonForm = () => {
 

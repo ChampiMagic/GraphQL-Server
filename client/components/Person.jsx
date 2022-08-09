@@ -1,20 +1,9 @@
 import React, { useEffect } from "react"
 import { gql, useLazyQuery } from "@apollo/client"
+import { FIND_PERSON } from "../utils/graphQueries"
 
 
-const FIND_PERSON = gql`
-  query FindPerson($personName: String!) {
-    findPerson(name: $personName) {
-      id
-      name
-      phone
-      address {
-        city
-        street
-      }
-    }
-  }
-`
+
 
 const Person = ({person, updatePrincipal}) => {
     if(person === null) return null

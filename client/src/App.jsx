@@ -8,20 +8,9 @@ import PersonForm from '../components/PersonForm'
 import PhoneForm from '../components/PhoneForm'
 import LoginForm from '../components/LoginForm'
 import { useApolloClient } from '@apollo/client'
+import { ALL_PERSONS } from '../utils/graphQueries'
 
-export const ALL_PERSONS = gql`
-  query {
-    allPersons {
-      id
-      name
-      phone
-      address {
-        city
-        street
-      }
-    }
-  }
-`
+
 
 
 function App() {
