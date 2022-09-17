@@ -133,7 +133,7 @@ const resolvers = {
         },
         createUser: async (root, args) => {
             const newUser = new User({ username: args.username })
-
+            console.log(args)
             try {
 
                 await newUser.save()
